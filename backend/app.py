@@ -1,9 +1,11 @@
-from flask import Flask, render_template, redirect, url_for, request, flash
+from flask import Flask, render_template, redirect, url_for, request, flash, send_from_directory, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from flask_cors import CORS
 from flask_bcrypt import Bcrypt
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="../frontend/dist", static_url_path="/")
+CORS(app)
 app.config['SECRET_KEY'] = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 db = SQLAlchemy(app)
@@ -35,7 +37,7 @@ def load_user(user_id):
 
 @app.route('/')
 def home():
-    return "hello world"
+    return send_from_directory(app.static_folder, "index.html")
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
