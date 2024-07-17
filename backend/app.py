@@ -72,7 +72,7 @@ def login():
         password = request.form.get('password')
         user = User.query.filter_by(username=username).first()
 
-        if user is None or not bcrypt.check_password_hash(user.password_hash, password):
+        if user is None or not bcrypt.check_password_hash(user.password, password):
             flash('Invalid username or password')
             return redirect(url_for('login'))
 
