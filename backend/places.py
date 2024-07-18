@@ -8,7 +8,8 @@ def get_user_location():
     return loc[0], loc[1]
 
 
-def get_nearby_places(KEY, lat, lon, keyword, type):
+def get_nearby_places(KEY, keyword, type):
+    lat, lon = get_user_location()
     request = ('https://maps.googleapis.com/maps/api/place/nearbysearch/json'
                 f'?keyword={keyword}'
                 f'&location={lat}%2C{lon}'
@@ -17,6 +18,7 @@ def get_nearby_places(KEY, lat, lon, keyword, type):
                 f'&key={KEY}')
 
     res = requests.get(request)
+    # print(res.text)
     res = res.json()
 
     # print(len(res["results"]))
@@ -26,6 +28,6 @@ def get_nearby_places(KEY, lat, lon, keyword, type):
 if __name__ == '__main__':
     GOOGLE_KEY = os.getenv('GOOGLE_KEY')
     lat, lon = get_user_location()
-    restaurants = get_nearby_places(GOOGLE_KEY, lat, lon, 'restaurant', 'restaurant')
+    restaurants = get_nearby_places(GOOGLE_KEY, 'restaurants', 'restaurant')
     for restaurant in restaurants:
         print(restaurant['name'])
