@@ -2,15 +2,14 @@ import {BrowserRouter as Router, Link, Route, Routes} from 'react-router-dom';
 import Home from '../pages/Home';
 import Login from "../pages/Login.jsx";
 import Signup from '../pages/Signup';
-
-import './App.css';
+import Navigation from "../pages/Navigation.jsx";
 
 function App() {
 	return (
-		<>
+		<div className='h-screen w-screen overflow-hidden'>
 			<Router>
-				<Link to='/login'>Login</Link>
-				<div className="App">
+				<div className='w-full h-full'>
+					<Navigation />
 					<Routes>
 						<Route path="/" element={<Home />} />
 						<Route path="/login" element={<Login />} />
@@ -18,7 +17,7 @@ function App() {
 					</Routes>
 				</div>
 			</Router>
-		</>
+		</div>
 	);
 }
 
