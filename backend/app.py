@@ -60,7 +60,7 @@ def get_locations():
     return jsonify(names=names)
 
 
-@app.route('/register', methods=['GET', 'POST'])
+@app.route('/signup', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         username = request.form.get('username')
@@ -83,7 +83,7 @@ def register():
         login_user(new_user)
         return redirect(url_for('dashboard'))
 
-    return render_template('register.html')
+    return send_from_directory(app.static_folder, "index.html")
 
 @app.route('/api/login', methods=['POST'])
 def login():

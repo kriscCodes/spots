@@ -26,7 +26,7 @@ const Home = () => {
 
 	return (
 		<div>
-			<h1>Welcome to the Home Page</h1>
+			<h1>weccdfdfffdee</h1>
 			<p>This is the home page of your React application.</p>
 			{locations.map((location) => (
 				<p key={location}>{location}</p>
