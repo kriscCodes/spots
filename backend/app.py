@@ -1,8 +1,10 @@
+import os
 from flask import Flask, render_template, redirect, url_for, request, flash, send_from_directory, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
+from places import get_nearby_places
 
 app = Flask(__name__, static_folder="../frontend/dist", static_url_path="/")
 CORS(app)
@@ -35,11 +37,30 @@ def create_tables():
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-@app.route('/')
-def home():
-    return send_from_directory(app.static_folder, "index.html")
+# Serves react pages
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    print('finding', path)
+    if path != "" and os.path.exists(app.static_folder + '/' + path):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
 
-@app.route('/register', methods=['GET', 'POST'])
+
+@app.route('/api/locations', methods=['GET'])
+def get_locations():
+    locations = get_nearby_places(os.getenv('GOOGLE_KEY'), 'restaurant', 'restaurant')
+    names = []
+    for location in locations:
+        name = location['name']
+        if name:
+            names.append(location['name'])
+
+    return jsonify(names=names)
+
+
+@app.route('/signup', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         username = request.form.get('username')
@@ -62,24 +83,25 @@ def register():
         login_user(new_user)
         return redirect(url_for('dashboard'))
 
-    return render_template('register.html')
+    return send_from_directory(app.static_folder, "index.html")
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/api/login', methods=['POST'])
 def login():
+    data = request.get_json()
+    # username = request.form.get('username')
+    username = data.get('username')
+    # password = request.form.get('password')
+    password = data.get('password')
+    user = User.query.filter_by(username=username).first()
 
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        user = User.query.filter_by(username=username).first()
+    if user is None or not bcrypt.check_password_hash(user.password, password):
+        return jsonify({'message': 'Login failed'}), 401
+        # flash('Invalid username or password')
+        # return redirect(url_for('login'))
 
-        if user is None or not bcrypt.check_password_hash(user.password, password):
-            flash('Invalid username or password')
-            return redirect(url_for('login'))
-
-        login_user(user)
-        return redirect(url_for('dashboard'))
-
-    return render_template('login.html')
+    login_user(user)
+    return jsonify({'message': 'Login successful'}), 200
+    # return redirect(url_for('dashboard'))
 
 @app.route('/dashboard')
 @login_required

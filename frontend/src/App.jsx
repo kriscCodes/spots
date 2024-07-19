@@ -1,17 +1,23 @@
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import {BrowserRouter as Router, Link, Route, Routes} from 'react-router-dom';
 import Home from '../pages/Home';
-import './App.css';
+import Login from "../pages/Login.jsx";
+import Signup from '../pages/Signup';
+import Navigation from "../pages/Navigation.jsx";
 
 function App() {
 	return (
-		<Router>
-			<div className="App">
-				<Routes>
-					<Route path="/" element={<Home />} />
-					{/* Add other routes here */}
-				</Routes>
-			</div>
-		</Router>
+		<div className='h-screen w-screen overflow-hidden'>
+			<Router>
+				<div className='w-full h-full'>
+					<Navigation />
+					<Routes>
+						<Route path="/" element={<Home />} />
+						<Route path="/login" element={<Login />} />
+						<Route path="/signup" element={<Signup />} />
+					</Routes>
+				</div>
+			</Router>
+		</div>
 	);
 }
 
