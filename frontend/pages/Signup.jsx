@@ -11,7 +11,7 @@ const Signup = () => {
 			<h1 className='text-3xl'>Sign Up</h1>
 			<form className='flex flex-col gap-5 w-[300px] items-center' method="POST" action="/signup">
 				<div className='flex flex-col gap-2 w-[70%]'>
-					<label htmlFor="username">Username:</label>
+					<label htmlFor="username">Username</label>
 					<input
 						className='p-1 bg-[#F8F8F8] transition border rounded-sm shadow-md shadow-[#C9C9C9]
 						focus:outline-none focus:border-blue-400 focus:bg-[#DDDDDD] hover:bg-[#DDDDDD]'
