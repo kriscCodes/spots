@@ -39,13 +39,24 @@ function Login() {
             <form className='flex flex-col gap-5 w-[300px] items-center' onSubmit={handleSubmit}>
                 <div className='flex flex-col gap-2 w-[70%]'>
                     <label>Username</label>
-                    <input className='p-1 bg-[#F8F8F8] rounded-sm shadow-md shadow-[#C9C9C9]' type="text" value={username} onChange={(e) => setUsername(e.target.value)}/>
+                    <input
+                        className='p-1 bg-[#F8F8F8] transition border rounded-sm shadow-md shadow-[#C9C9C9]
+                        focus:outline-none focus:border-blue-400 focus:bg-[#DDDDDD] hover:bg-[#DDDDDD]'
+                        type="text" value={username}
+                        onChange={(e) => setUsername(e.target.value)}/>
                 </div>
                 <div className='flex flex-col gap-2 w-[70%]'>
                     <label>Password</label>
-                    <input className='p-1 bg-[#F8F8F8] rounded-sm shadow-md shadow-[#C9C9C9] caret-black' type="password" value={password} onChange={(e) => setPassword(e.target.value)}/>
+                    <input
+                        className='p-1 bg-[#F8F8F8] transition border rounded-sm shadow-md shadow-[#C9C9C9]
+                        focus:outline-none focus:border-blue-400 focus:bg-[#DDDDDD] hover:bg-[#DDDDDD]'
+                        type="password" value={password}
+                        onChange={(e) => setPassword(e.target.value)}/>
                 </div>
-                <button className='w-fit px-10 py-1 mt-5 bg-[#E9E9E9] shadow-md shadow-[#CCCCCC] rounded-md transition-all hover:bg-[#B8B8B8]' type='submit'>Login</button>
+                <button
+                    className='w-fit px-10 py-1 mt-5 bg-[#E9E9E9] shadow-md shadow-[#CCCCCC] rounded-md transition-all hover:cursor-pointer hover:bg-[#B8B8B8]'
+                    type='submit'>Login
+                </button>
             </form>
             <Link className='text-blue-500 underline transition-all hover:text-blue-600' to='/signup'>New? Sign up here</Link>
         </div>
