@@ -8,6 +8,8 @@ const Home = () => {
 	const [submitted, setSubmitted] = useState(false)
 	const [isLoading, setIsLoading] = useState(true)
 	const [headerHeight, setHeaderHeight] = useState(0)
+	const [results, setResults] = useState([])
+	const [resultClicked, setResultClicked] = useState(false)
 
 	const headerRef = useRef(null)
 
@@ -57,6 +59,43 @@ const Home = () => {
 		}
 	}
 
+	const handleChange =  (e) => {
+		setQuery(e.target.value)
+		getResults(e)
+	}
+
+	const getResults = async (e) => {
+		try {
+			const response = await fetch('http://127.0.0.1:2700/api/query', {
+				method: 'POST',
+				headers: {'Content-Type': 'application/json'},
+				body: JSON.stringify({query: e.target.value, clear: 0})
+			});
+
+			if (response.status === 204) {
+				setResults([])
+				throw new Error("Error: Couldn't fetch query")
+			}
+
+			const data = await response.json();
+			const body = data.body;
+			const results = Object.keys(body).map(key => [
+				body[key][0],
+				(key).split(' ').map(w => w[0].toUpperCase() + w.substring(1).toLowerCase()).join(' '),
+				body[key][1]
+			])
+
+			setResults(results);
+		} catch (error) {
+			// console.error('Failed to fetch data', error);
+		}
+	}
+
+	const handleResultClick = (loc) => {
+		setQuery(loc)
+		setResults([])
+	}
+
 	return (
 		<div className='relative w-full h-screen flex flex-col overflow-scroll'>
 			<div
@@ -66,7 +105,7 @@ const Home = () => {
 				onTransitionEnd={handleTransitionEnd}
 			>
 				<div
-					className='w-full h-full flex flex-col items-center p-5  transition-transform duration-300'
+					className='w-full h-full flex flex-col items-center p-5 transition-transform duration-300'
 				>
 					<h1
 						className={`absolute top-2  transition-all duration-1000 ease-in-out
@@ -80,13 +119,41 @@ const Home = () => {
 						className='w-full h-full flex gap-5 transition duration-100'
 						style={{ marginTop: `${headerHeight}px` }}
 						onSubmit={(e) => handleSubmit(e)}>
-						<input
-							className='w-[80%] px-3 py-2 bg-[#F8F8F8] transition rounded-md shadow-[#C9C9C9] shadow-md
-							border focus:outline-none focus:shadow-blue-300 focus:border-blue-400'
-							onChange={(e) => {setQuery(e.target.value)}}
-							placeholder='Enter a city, region ...'
-							type="text"
-						/>
+						<div className='w-[80%]'>
+							<input
+								className='w-full px-3 py-2 bg-[#F8F8F8] transition rounded-md shadow-[#C9C9C9]
+								shadow-md border focus:outline-none focus:shadow-blue-300 focus:border-blue-400'
+								value={query}
+								onChange={(e) => handleChange(e)}
+								placeholder='Enter a city, region ...'
+								type="text"
+							/>
+							{
+								query && !submitted &&
+								<div className="absolute flex flex-col w-[75%] mt-1">
+									{
+										results.map((location) => {
+											const locationJoined = location.join(', ');
+											const locString = location.join(' ')
+											return (
+												<div
+													key={location}
+													className='w-full py-1 px-2 transition duration-75 border border-neutral-300
+													hover:bg-[#B8B8B8] hover:cursor-pointer hover:scale-105'
+													onClick={() => handleResultClick(locString)}
+												>
+													{locationJoined.split('').map((char, index) => (
+														query.toLowerCase().includes(char.toLowerCase()) ?
+														<span key={index} className="font-bold">{char}</span> :
+														<span key={index}>{char}</span>
+													))}
+												</div>
+											);
+										})
+									}
+								</div>
+							}
+						</div>
 						<input
 							className='w-[20%] transition-all rounded-lg shadow-md shadow-[#C9C9C9] bg-[#E9E9E9]
 							hover:bg-[#B8B8B8] hover:cursor-pointer'

@@ -8,6 +8,16 @@ def get_user_location():
     return loc[0], loc[1]
 
 
+def get_state():
+    g = geocoder.ip('me')
+    return g.state
+
+
+def get_city():
+    g = geocoder.ip('me')
+    return g.city
+
+
 def get_nearby_places(KEY, keyword, type):
     lat, lon = get_user_location()
     request = ('https://maps.googleapis.com/maps/api/place/nearbysearch/json'

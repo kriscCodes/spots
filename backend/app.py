@@ -1,10 +1,11 @@
-import os
-from flask import Flask, render_template, redirect, url_for, request, flash, send_from_directory, jsonify
+import os, json
+from flask import Flask, render_template, redirect, url_for, request, flash, send_from_directory, jsonify, Response
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
 from places import get_nearby_places
+from dynamic_search import DynamicSearch
 
 app = Flask(__name__, static_folder="../frontend/dist", static_url_path="/")
 CORS(app)
@@ -59,6 +60,20 @@ def get_locations():
 
     return jsonify(names=names)
 
+
+@app.route('/api/query', methods=['POST'])
+def query():
+    data = request.json
+    ds = DynamicSearch()
+    result = ds.search(data['query'])
+    if result:
+        # print(result)
+        # print((jsonify(body=result)).json)
+        # return jsonify(body=result), 200
+        json_data = json.dumps({"body": result}, indent=4)
+        return Response(json_data, mimetype='application/json'), 200
+
+    return jsonify(body=""), 204
 
 @app.route('/signup', methods=['GET', 'POST'])
 def register():

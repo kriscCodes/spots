@@ -1,4 +1,7 @@
 import sys
+import pprint
+from collections import OrderedDict
+from places import get_state, get_city
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base
 
@@ -20,38 +23,88 @@ class DynamicSearch:
         self.Session = sessionmaker(bind=self.engine)
         self.prev = []
 
-    def c_search(self, query, prev=None):
+    def search(self, query):
         if query == "":
             return None
 
-        if prev is None:
-            prev = self.prev
-
-        res_cities = self.search_cities("".join(prev + [query]))
-        res_states = self.search_cities("".join(prev + [query]))
-        res_counties = self.search_counties("".join(prev + [query]))
-        ans = {}
+        res_cities = self.search_cities(query)
+        res_states = self.search_cities(query)
+        res_counties = self.search_counties(query)
+        ans = OrderedDict()
         if res_cities or res_states or res_counties:
-            for city in res_cities:
-                if city.county not in ans:
-                    ans[city.county] = [city.city, city.state_full]
-            for county in res_counties:
-                if county.county not in ans:
-                    ans[county.county] = [county.city, county.state_full]
-            for state in res_cities:
-                if state.county not in ans:
-                    ans[state.county] = [state.city, state.state_full]
+            for loc in res_cities:
+                if loc.county not in ans:
+                    ans[loc.county] = [loc.city, loc.state_short, loc.state_full]
+            for loc in res_counties:
+                if loc.county not in ans:
+                    ans[loc.county] = [loc.city, loc.state_short, loc.state_full]
+            for loc in res_cities:
+                if loc.county not in ans:
+                    ans[loc.county] = [loc.city, loc.state_short, loc.state_full]
 
         self.prev.append(query)
         if not ans:
             return None
+        ans = self._reorganize(ans)
 
         return ans
+
+    def _reorganize(self, places):
+        # user_city = get_city().lower()
+        user_state = get_state().lower()
+
+        ans = OrderedDict()
+
+        for county, lst in places.items():
+            city = lst[0]
+            state_short = lst[1]
+            state = lst[2]
+
+            if state.lower() == user_state:
+                ans[county] = [city, state_short, state]
+
+        for county, lst in places.items():
+            city = lst[0]
+            state_short = lst[1]
+            state = lst[2]
+
+            if state.lower() != user_state:
+                ans[county] = [city, state_short, state]
+
+        return ans
+
+    # def c_search(self, query, prev=None):
+    #     if query == "":
+    #         return None
+    #
+    #     if prev is None:
+    #         prev = self.prev
+    #
+    #     res_cities = self.search_cities("".join(prev + [query]))
+    #     res_states = self.search_cities("".join(prev + [query]))
+    #     res_counties = self.search_counties("".join(prev + [query]))
+    #     ans = {}
+    #     if res_cities or res_states or res_counties:
+    #         for city in res_cities:
+    #             if city.county not in ans:
+    #                 ans[city.county] = [city.city, city.state_full]
+    #         for county in res_counties:
+    #             if county.county not in ans:
+    #                 ans[county.county] = [county.city, county.state_full]
+    #         for state in res_cities:
+    #             if state.county not in ans:
+    #                 ans[state.county] = [state.city, state.state_full]
+    #
+    #     self.prev.append(query)
+    #     if not ans:
+    #         return None
+    #
+    #     return ans
 
     def clear_hist(self):
         self.prev = []
 
-    def search(self):
+    def cont_search(self):
         try:
             while True:
                 query = input("Search for: ")
