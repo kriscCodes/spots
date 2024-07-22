@@ -22,6 +22,8 @@ function Login() {
                 },
                 body: JSON.stringify({ username, password })
             });
+			nav('/dashboard');
+			
 
             if (!response.ok) {
                 throw new Error('Error: Login Failed!')
