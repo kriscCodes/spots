@@ -6,6 +6,7 @@ from flask_cors import CORS
 from flask_bcrypt import Bcrypt
 from places import get_nearby_places
 from serpapi import GoogleSearch
+from config import Config
 # pip3 install serpapi 
 # pip3 install google-search-results
 
@@ -124,7 +125,7 @@ def search():
     if request.method == 'POST':
         loc = request.form['searchbox']
         params = {
-        "api_key": "ddf21c906cf4be51406dfee199d58c12418e8025b396489305429805ed116aac",
+        "api_key": Config.GOOGLE_SEARCH_API,
         "engine": "google_events",
         "q": loc,
         "hl": "en",
