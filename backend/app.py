@@ -5,6 +5,9 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
 from places import get_nearby_places
+from serpapi import GoogleSearch
+# pip3 install serpapi 
+# pip3 install google-search-results
 
 app = Flask(__name__, static_folder="../frontend/dist", static_url_path="/")
 CORS(app)
@@ -114,7 +117,29 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
+@app.route('/search', methods=['POST', 'GET'])
+def search():
+    if request.method == 'GET':
+       return render_template('search.html')
+    if request.method == 'POST':
+        loc = request.form['searchbox']
+        params = {
+        "api_key": "ddf21c906cf4be51406dfee199d58c12418e8025b396489305429805ed116aac",
+        "engine": "google_events",
+        "q": loc,
+        "hl": "en",
+        "google_domain": "google.com",
+        "gl": "us",
+        "start": "0"
+        }
+        search = GoogleSearch(params)
+        results = search.get_dict()
+        events = results['events_results']
+        #print(results)
+        #print(events)
+
+    return render_template('search.html', loc=loc, events=events)
+
 if __name__ == '__main__':
     create_tables()
     app.run(debug=True, port=2700)
-

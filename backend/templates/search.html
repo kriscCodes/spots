@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title> results </title>
+</head>
+
+<body>
+
+    <form name="search" action="/search" method="post">
+        Location: <input type="text" name="searchbox">
+        <input type="submit" value="Submit">
+    </form>
+
+   <table>
+    <tr>
+        <th>Title</th>
+        <th>Date</th>
+        <th>Address</th>
+        <th>Event Link</th>
+        <th>Image</th>
+        <th>Description</th>
+    </tr>
+    {% for event in events %}
+    <tr>
+    <td> <a href="{{ event['link'] }}"> {{ event['title'] }}  </a> </td>
+    <td> {{ event['when'] }} </td>
+    <td> {{ event['address'] }} </td>
+    <td> {{ event['link'] }} </td>
+    <td> {{ event['image'] }} </td>
+    <td> {{ event['description'] }} </td>
+    </tr>
+    {% endfor %}
+   </table>
+</body>
+
+</html>
