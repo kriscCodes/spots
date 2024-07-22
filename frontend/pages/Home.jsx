@@ -9,7 +9,9 @@ const Home = () => {
 	const [isLoading, setIsLoading] = useState(true)
 	const [headerHeight, setHeaderHeight] = useState(0)
 	const [results, setResults] = useState([])
-	const [resultClicked, setResultClicked] = useState(false)
+	// const [resultClicked, setResultClicked] = useState(false)
+	// const [showingCard, setShowingCard] = useState(false)
+	const [growId, setGrowId] = useState("")
 
 	const headerRef = useRef(null)
 
@@ -96,6 +98,10 @@ const Home = () => {
 		setResults([])
 	}
 
+	const handleEventClick = (name) => {
+		setGrowId(name)
+	}
+
 	return (
 		<div className='relative w-full h-screen flex flex-col overflow-scroll'>
 			<div
@@ -168,7 +174,13 @@ const Home = () => {
 				<div className='overflow-scroll flex gap-2'>
 					<div className='grid grid-cols-3 gap-5 px-4 w-3/4 overflow-scroll'>
 						{
-							locations.map((name, idx) => <EventCard key={name} delay={idx} name={name} />)
+							locations.map((name, idx) => (
+								<EventCard
+									key={name} delay={idx} name={name}
+									handleEventClick={handleEventClick}
+									growId={growId}
+								/>
+							))
 						}
 					</div>
 					<div className='w-1/4 z-0'>

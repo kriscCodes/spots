@@ -2,21 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-.centered {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-/* Final top-left state */
-.top-left {
-  position: absolute;
-  top: 0;
-  left: 0;
-  transform: translate(0, 0);
-}
-
 /* Transition properties */
 .transition {
   transition: all 0.5s;
