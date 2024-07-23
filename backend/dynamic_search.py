@@ -51,7 +51,11 @@ class DynamicSearch:
 
     def _reorganize(self, places):
         # user_city = get_city().lower()
-        user_state = get_state().lower()
+        user_state = get_state()
+        if user_state is None:
+            return places
+        else:
+            user_state = user_state.lower()
 
         ans = OrderedDict()
 

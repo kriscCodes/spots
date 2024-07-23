@@ -1,17 +1,19 @@
-import os, json
+import os, json, pprint, asyncio
 from flask import Flask, render_template, redirect, url_for, request, flash, send_from_directory, jsonify, Response
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
-from places import get_nearby_places
+from places import get_places, get_photo
 from dynamic_search import DynamicSearch
 
 app = Flask(__name__, static_folder="../frontend/dist", static_url_path="/")
 CORS(app)
 app.config['SECRET_KEY'] = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
-db = SQLAlchemy(app)
+# might have to change these settings
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app, session_options={"autoflush": True})
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 bcrypt = Bcrypt()
@@ -29,6 +31,23 @@ class User(UserMixin, db.Model):
     friends = db.Column(db.JSON, nullable=False, default=list)
     events = db.Column(db.JSON, nullable=False, default=list)
     locations = db.Column(db.JSON, nullable=False, default=list)
+
+
+class Locations(db.Model):
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True, nullable=True)
+    location = db.Column(db.String(200), unique=True, nullable=False)
+    places = db.relationship('Places', backref='location', lazy=True)
+
+
+class Places(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    address = db.Column(db.String(200), nullable=False)
+    img_url = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.String(255), nullable=False)
+    location_id = db.Column(db.Integer, db.ForeignKey('locations.id'), nullable=False)
+
+
 
 def create_tables():
   with app.app_context():
@@ -49,16 +68,89 @@ def serve(path):
         return send_from_directory(app.static_folder, 'index.html')
 
 
-@app.route('/api/locations', methods=['GET'])
+@app.route('/api/locations', methods=['GET', 'POST'])
 def get_locations():
-    locations = get_nearby_places(os.getenv('GOOGLE_KEY'), 'restaurant', 'restaurant')
-    names = []
-    for location in locations:
-        name = location['name']
-        if name:
-            names.append(location['name'])
+    data = request.json
+    curr_location = data['location']
+    print(curr_location)
+    location = Locations.query.filter_by(location=curr_location).first()
+    if location:
+        print('found location for ', location)
+        print('these are the places', location.places)
+        places = format_places(location.places)
+    else:
+        print('didn"t find location for', curr_location)
+        # loop = asyncio.get_event_loop()
+        # places = loop.run_until_complete(fetch_store_places(curr_location))
+        places = fetch_store_places(curr_location)
 
-    return jsonify(names=names)
+    return jsonify(places=places), 200
+
+
+
+def format_places(places):
+    return [{
+        'name': place.name,
+        'address': place.address,
+        'img_url': place.img_url,
+        'description': place.description
+    } for place in places]
+
+
+def fetch_store_places(curr_location):
+    places = []
+    print('fetching...')
+    fetched_places = get_places('restaurant', 'restaurant', curr_location)
+    print('done fetching')
+    # print('results are ', fetched_places)
+    try:
+        new_location = Locations.query.filter_by(location=curr_location).first()
+        if not new_location:
+            new_location = Locations(location=curr_location)
+            db.session.add(new_location)
+            # await db.session.flush()
+            db.session.flush()
+
+        for idx, fetched_place in enumerate(fetched_places):
+            # print(idx, fetched_place)
+            place = create_place_dict(fetched_place, new_location.id)
+            if place:
+                places.append(place)
+                new_place = Places(**place)
+                db.session.add(new_place)
+
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print("db error 2", e)
+        return []
+
+    return places
+
+
+def create_place_dict(fetched_place, location_id):
+    if 'name' not in fetched_place:
+        return None
+    photo_url = ""
+    if 'photos' in fetched_place and fetched_place['photos'][0]:
+        photo_url = get_photo_url(fetched_place['photos'][0])
+
+    return {
+        'name': fetched_place['name'],
+        'address': fetched_place.get('vicinity', ""),
+        'img_url': photo_url,
+        'description': f'Description for {fetched_place["name"]}',
+        'location_id': location_id
+    }
+
+def get_photo_url(photo):
+    if photo and 'photo_reference' in photo:
+        height = photo.get('height')
+        width = photo.get('width')
+        photo_id = photo.get('photo_reference')
+        return get_photo(photo_id, height, width)
+
+    return ""
 
 
 @app.route('/api/query', methods=['POST'])
