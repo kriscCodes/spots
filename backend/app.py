@@ -137,9 +137,9 @@ def search():
         results = search.get_dict()
         events = results['events_results']
         #print(results)
-        #print(events)
+        print(events)
 
-    return render_template('search.html', loc=loc, events=events)
+    return jsonify(loc=loc, events=events)
 
 if __name__ == '__main__':
     create_tables()
