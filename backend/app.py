@@ -41,6 +41,7 @@ class Locations(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, nullable=True)
     location = db.Column(db.String(200), unique=True, nullable=False)
     places = db.relationship('Places', backref='location', lazy=True)
+    # events = db.relationship('Events', backref='location', lazy=True)
 
 
 class Places(db.Model):
@@ -80,7 +81,7 @@ def get_locations():
     location = Locations.query.filter_by(location=curr_location).first()
     if location:
         print('found location for ', location)
-        print('these are the places', location.places)
+        # print('these are the places', location.places)
         places = format_places(location.places)
     else:
         print('didn"t find location for', curr_location)
@@ -225,13 +226,17 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-@app.route('/search', methods=['POST', 'GET'])
+@app.route('/api/search', methods=['POST', 'GET'])
 def search():
-    if request.method == 'GET':
-       return render_template('search.html')
-    if request.method == 'POST':
-        loc = request.form['searchbox']
-        params = {
+    # if request.method == 'GET':
+    #    return render_template('search.html')
+    # if request.method == 'POST':
+    # loc = request.form['searchbox']
+    data = request.json
+    # print(data)
+    loc = data['location']
+    print('google search for', loc)
+    params = {
         "api_key": Config.GOOGLE_SEARCH_API,
         "engine": "google_events",
         "q": loc,
@@ -239,14 +244,15 @@ def search():
         "google_domain": "google.com",
         "gl": "us",
         "start": "0"
-        }
-        search = GoogleSearch(params)
-        results = search.get_dict()
-        events = results['events_results']
-        #print(results)
-        print(events)
+    }
+    search = GoogleSearch(params)
+    results = search.get_dict()
+    events = results['events_results']
+    # print('google events results', results)
+    # print('google events', events)
 
-    return jsonify(loc=loc, events=events)
+    return jsonify(loc=loc, events=events), 200
+
 
 if __name__ == '__main__':
     create_tables()
