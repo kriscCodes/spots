@@ -6,6 +6,7 @@ import Navigation from "../pages/Navigation.jsx";
 import Dashboard from '../pages/Dashboard.jsx';
 import UserProfile from '../pages/UserProfile.jsx';
 import EventPage from "../pages/EventPage.jsx";
+import Feed from "../pages/Feed.jsx";
 
 function App() {
 	return (
@@ -20,6 +21,7 @@ function App() {
 						<Route path="/event" element={<EventPage />} />
 						<Route path="/dashboard" element={<Dashboard />} />
 						<Route path="/user/:username" element={<UserProfile />} />
+						<Route path="/feed/:username" element={<Feed />} />
 					</Routes>
 				</div>
 			</Router>
