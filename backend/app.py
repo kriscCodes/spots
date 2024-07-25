@@ -41,7 +41,6 @@ class Locations(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, nullable=True)
     location = db.Column(db.String(200), unique=True, nullable=False)
     places = db.relationship('Places', backref='location', lazy=True)
-    # events = db.relationship('Events', backref='location', lazy=True)
 
 
 class Places(db.Model):
@@ -54,7 +53,6 @@ class Places(db.Model):
     location_id = db.Column(db.Integer, db.ForeignKey('locations.id'), nullable=False)
 
 
-
 def create_tables():
   with app.app_context():
     db.create_all()
@@ -62,6 +60,19 @@ def create_tables():
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
+@app.route('/api/is-logged-in', methods=['GET'])
+def is_logged_in():
+    is_logged_in = current_user.is_authenticated
+    return jsonify({'loggedIn': is_logged_in})
+
+
+@app.route('/api/get-user', methods=['GET'])
+def get_user_api():
+    username = current_user.username
+    return jsonify({'username': username})
+
 
 # Serves react pages
 @app.route('/', defaults={'path': ''})

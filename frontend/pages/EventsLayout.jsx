@@ -11,10 +11,7 @@ const initState = {
 
 const actionTypes = {
     EVENT_CLICKED: 'EVENT_CLICKED',
-    SET_LOCATIONS: 'SET_LOCATIONS',
-    SET_HAS_LOCATIONS: 'SET_HAS_LOCATIONS',
-    SET_EVENTS: 'SET_EVENTS',
-    ADD_ITEMS: 'ADD_ITEMS',
+    SET_LOADING: 'SET_LOADING',
     SET_ALL: 'SET_ALL'
 }
 
@@ -24,12 +21,6 @@ const reducer = (state, action) => {
             return { ...state, clickedId: action.payload };
         case actionTypes.SET_LOADING:
             return { ...state, loading: false };
-        // case actionTypes.SET_LOCATIONS:
-        //     return { ...state, allEventsLocations: action.payload, loading: false, hasLocations: action.payload.length !== 0 };
-        // case actionTypes.SET_EVENTS:
-        //     return { ...state, allEventsLocations: state.locations.append()};
-        // case actionTypes.ADD_ITEMS:
-        //     return { ...state, allEventsLocations: [ ...state.allEventsLocations, ...action.payload], loading: false }
         case actionTypes.SET_ALL:
             return { ...state, allEventsLocations: action.payload };
         default:
@@ -57,18 +48,14 @@ function EventsLayout (props) {
                             if (response.ok) {
                                 return response.json();
                             }
-                            // dispatch({type: actionTypes.SET_HAS_LOCATIONS, payload: false})
                             throw new Error('could not fetch locations via api');
                         })
                     .then(data => {
                         if (!data) {
-                            // dispatch({type: actionTypes.SET_HAS_LOCATIONS, payload: false})
                             throw new Error('no data found');
                         }
                         console.log(data['places']);
                         dispatch({type: actionTypes.SET_ALL, payload: data['places']});
-                        // dispatch({type: actionTypes.SET_LOCATIONS, payload: data['places']});
-                        // dispatch({type: actionTypes.ADD_ITEMS, payload: data['places']});
                     })
             } catch (e) {
                 console.log('Error fetching events or locations', e);
@@ -83,73 +70,6 @@ function EventsLayout (props) {
         return () => clearTimeout(timer);
     }, [])
 
-    // useEffect(() => {
-    //     const getLocations = async (query) => {
-    //         try {
-    //             await fetch('http://127.0.0.1:2700/api/locations', {
-    //                 method: 'POST',
-    //                 headers: {'Content-Type': 'application/json'},
-    //                 body: JSON.stringify({location: query})
-    //             })
-    //                 .then(response => {
-    //                     if (response.ok) {
-    //                         return response.json();
-    //                     }
-    //                     // dispatch({type: actionTypes.SET_HAS_LOCATIONS, payload: false})
-    //                     throw new Error('could not fetch locations via api');
-    //                 })
-    //                 .then(data => {
-    //                     if (!data) {
-    //                         // dispatch({type: actionTypes.SET_HAS_LOCATIONS, payload: false})
-    //                         throw new Error('no data found');
-    //                     }
-    //                     console.log(data['places']);
-    //                     // dispatch({type: actionTypes.SET_LOCATIONS, payload: data['places']});
-    //                     dispatch({type: actionTypes.ADD_ITEMS, payload: data['places']});
-    //
-    //                 })
-    //         } catch (e) {
-    //             console.error('Error could not get locations:', e);
-    //         }
-    //     }
-    //
-    //     getLocations(props.query);
-    // }, []);
-
-    // useEffect(() => {
-    //     const getGoogleEvents = async (query) => {
-    //         try {
-    //             await fetch('http://127.0.0.1:2700/api/search', {
-    //                 method: 'POST',
-    //                 headers: {'Content-Type': 'application/json'},
-    //                 body: JSON.stringify({location: query})
-    //             })
-    //                 .then(response => {
-    //                     if (response.status === 200) {
-    //                         return response.json();
-    //                     }
-    //                     throw new Error('Failed to fetch events from search api');
-    //                 })
-    //                 .then(data => {
-    //                     if(!data) {
-    //                         throw new Error('no events found');
-    //                     }
-    //                     console.log('events', data['events']);
-    //                     dispatch({type: actionTypes.ADD_ITEMS, payload: data['events']});
-    //                 })
-    //         } catch (e) {
-    //             console.error('Error in getting events');
-    //         }
-    //     };
-    //
-    //     getGoogleEvents(props.query);
-    // }, []);
-
-    // useEffect(() => {
-    //     if (state.loadLocations && state.loadEvents) {
-    //         dispatch({type: actionTypes.SET_LOADING, payload: true});
-    //     }
-    // }, [state.loadLocations, state.loadEvents]);
 
     return (
         <div
