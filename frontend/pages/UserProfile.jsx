@@ -1,14 +1,11 @@
 import { useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import UserNav from './UserNav';
 import axios from 'axios';
 const UserProfile = () => {
 	const { username } = useParams();
-
 	const [user, setUser] = useState({});
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState(null);
-
-
+// TO SEE STUFF HERE I NEED TO MAKE CREATE WAY FOR USER TO SAVE EVENT
 	useEffect(() => {
 		// Define the async function to fetch data
 		const fetchData = async () => {
@@ -18,39 +15,23 @@ const UserProfile = () => {
             try {
                 const response = await axios.get(`http://127.0.0.1:2700/api/user/${endpoint}`)
                 setUser({...response.data})
+                console.log(user)
+
             } catch (err) {
                 console.log(err)
             }
-			// try {
-			// 	const response = await axios.get(
-			// 		`http://127.0.0.1:2700/api/user/${username}`,
-			// 		{
-			// 			headers: { 'Content-Type': 'application/json' },
-			// 		}
-			// 	);
-			// 	setUser(response.data);
-			// 	console.log(username);
-			// } catch (error) {
-			// 	setError(error);
-			// } finally {
-			// 	setLoading(false);
-			// }
 		};
 
 		fetchData();
-	}, []); // Empty dependency array means this effect runs once on mount
-
-	// if (loading) {
-	// 	return <div>Loading...</div>;
-	// }
-
-	// if (error) {
-	// 	return <div>Error: {error.message}</div>;
-	// }
+	}, []); 
 
 	return (
-		<div>
-			<h1>{user.username}</h1>
+		<div className="relative w-full h-screen flex flex-col overflow-scroll">
+			<UserNav user={user} />
+			<h1>Collection</h1>
+            <div>
+                {/* map all the events the user has saved */}
+            </div>
 		</div>
 	);
 };

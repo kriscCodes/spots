@@ -210,7 +210,7 @@ def login():
         # flash('Invalid username or password')
         # return redirect(url_for('login'))
     else:
-        # login_user(user)
+        login_user(user)
         return jsonify({'message': 'Login successful'}), 200
 
 @app.route('/dashboard', methods=['GET', 'POST'])
@@ -263,10 +263,8 @@ def user_settings(username):
     
     # If user is private then a private account page should be rendered
     # If user is public then you can see what the user has saved to their collection, what they've gone to, their ratings, and their other friends
+    return send_from_directory(app.static_folder, "index.html")
 
-
-    
-    return f'User {username}'
 
 @app.route('/allusers', methods=['GET', 'POST'])
 
@@ -292,11 +290,43 @@ def user(username):
     return send_from_directory(app.static_folder, "index.html")
 
 
-@app.route('/logout')
-@login_required
+@app.route('/api/user/<username>/privacy', methods=['PUT'])
+def update_privacy(username):
+    user = User.query.filter_by(username=username).first()
+    if user:
+        data = request.json
+        user.visibility = data['visibility']
+        db.session.commit()
+        print(user.visibility)
+        return jsonify({'message': 'Privacy setting updated successfully'}), 200
+    return jsonify({'message': 'User not found'}), 404
+
+@app.route('/api/user/<username>/username', methods=['PUT'])
+def update_username(username):
+    user = User.query.filter_by(username=username).first()
+    if user:
+        data = request.json
+        user.username = data['user_name']
+        db.session.commit()
+        print(user.username)
+        return jsonify({'message': 'Privacy setting updated successfully', 'new_username': user.username}), 200
+    return jsonify({'message': 'User not found'}), 404
+    
+@app.route('/api/user/<username>/email', methods=['PUT'])
+def update_email(username):
+    user = User.query.filter_by(username=username).first()
+    if user:
+        data = request.json
+        user.email = data['email']
+        db.session.commit()
+        print(user.email)
+        return jsonify({'message': 'Email updated successfully', 'new_email': user.email}), 200
+    return jsonify({'message': 'User not found'}), 404
+
+@app.route('/api/logout', methods=['POST'])
 def logout():
     logout_user()
-    return redirect(url_for('login'))
+    return jsonify({'message': 'Logged out successfully'}), 200
 
 @app.route('/api/search', methods=['POST', 'GET'])
 def search():
