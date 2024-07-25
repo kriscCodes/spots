@@ -42,7 +42,7 @@ def get_locations(keyword, type, location):
 
 
 def get_photo(id, height, width):
-    key = os.getenv('GOOGLE_KEY')
+    key = os.getenv('GOOGLE_KEY') or Config.GOOGLE_MAPS_API
     request = ('https://maps.googleapis.com/maps/api/place/photo'
                f'?photoreference={id}'
                f'&maxheight={height}'

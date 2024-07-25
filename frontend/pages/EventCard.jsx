@@ -30,7 +30,7 @@ function EventCard (props) {
         setTimeout(() => {
             navigate('/event', {
                 state: {
-                    eventName: props.data.isRestaurant ? props.data.name : props.data.title,
+                    name: props.data.isRestaurant ? props.data.name : props.data.title,
                     address: props.data.isRestaurant ? props.data.address : props.data.address[0] || "No address",
                     desc: props.data.isRestaurant ? props.data.description : props.data.description || `Description for ${props.data.title}`,
                     imgUrl: props.data.isRestaurant ? props.data.img_url : props.data.thumbnail || null,

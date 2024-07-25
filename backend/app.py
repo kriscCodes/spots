@@ -33,8 +33,9 @@ class User(UserMixin, db.Model):
     visibility = db.Column(db.Boolean, nullable=False, default=True)
     # JSON is how sqlite allows for arrays
     friends = db.Column(db.JSON, nullable=False, default=list)
-    events = db.Column(db.JSON, nullable=False, default=list)
-    locations = db.Column(db.JSON, nullable=False, default=list)
+    places = db.Column(db.JSON, nullable=False, default=dict)
+    # events = db.Column(db.JSON, nullable=False, default=list)
+    # locations = db.Column(db.JSON, nullable=False, default=list)
 
 
 class Locations(db.Model):
@@ -50,6 +51,8 @@ class Places(db.Model):
     address = db.Column(db.String(200), nullable=False)
     img_url = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(255), nullable=False)
+    rating = db.Column(db.Numeric(precision=5, scale=2), nullable=False, default=0)
+    reviews = db.Column(db.JSON, nullable=False, default=list)
     location_id = db.Column(db.Integer, db.ForeignKey('locations.id'), nullable=False)
 
 
@@ -70,8 +73,46 @@ def is_logged_in():
 
 @app.route('/api/get-user', methods=['GET'])
 def get_user_api():
-    username = current_user.username
-    return jsonify({'username': username})
+    is_logged_in = current_user.is_authenticated
+    if is_logged_in:
+        username = current_user.username
+        return jsonify({'username': username, 'places': current_user.places})
+
+    return jsonify({}), 401
+
+
+@app.route('/api/update-locations', methods=['POST'])
+def update_user_locations():
+    data = request.json
+    username = data['user']
+    place_name = data['name']
+    new_status = data['status']
+    new_message = data.get('message', None)
+    print(username, place_name, new_status, new_message)
+
+    user = User.query.filter_by(username=username).first()
+    place = Places.query.filter_by(name=place_name).first()
+    if place and user:
+        if not user.places:
+            user.places = {}
+
+        existing_entry = user.places.get(place.id, {})
+        print('existing_entry', existing_entry)
+
+        updated_entry = {
+            'status': new_status,
+            'message': new_message if new_message is not None else existing_entry.get('message', '')
+        }
+
+        print('updated_entry', updated_entry)
+
+        user.places[place.id] = updated_entry
+        db.session.flush()
+        db.session.commit()
+        print(user.places)
+        return jsonify({'places': user.places}), 200
+
+    return jsonify({'message': 'User or Place not found'}), 404
 
 
 # Serves react pages
@@ -175,10 +216,14 @@ def create_event_dict(place, id):
 
 def create_location_dict(place, id):
     if 'name' not in place:
+        print('name not found')
         return None
 
     photo_url = ""
+    inside = 'photos' in place
+    print('inside', inside)
     if 'photos' in place and place['photos'][0]:
+        print('ref', place['photos'][0])
         photo_url = get_photo_url(place['photos'][0])
 
     return {
@@ -191,10 +236,14 @@ def create_location_dict(place, id):
     }
 
 def get_photo_url(photo):
+    print('photoo',photo)
     if photo and 'photo_reference' in photo:
+        ref = 'photo_reference' in photo
+        print('ref?', ref)
         height = photo.get('height')
         width = photo.get('width')
         photo_id = photo.get('photo_reference')
+        print('stuff', height, width, photo_id)
         return get_photo(photo_id, height, width)
 
     return ""
@@ -234,6 +283,37 @@ def query():
         return Response(json_data, mimetype='application/json'), 200
 
     return jsonify(body=""), 204
+
+
+@app.route('/api/place-rating-reviews', methods=['POST'])
+def get_rating_reviews():
+    data = request.json
+    name = data['name']
+
+    place = Places.query.filter_by(name=name).first()
+    if place:
+        rating = place.rating
+        reviews = place.reviews
+
+        return jsonify(rating=rating, reviews=reviews)
+
+    return jsonify({}), 404
+
+
+@app.route('/api/set-rating', methods=['POST'])
+def set_rating():
+    data = request.json
+    name = data['name']
+    rating = data['rating']
+
+    place = Places.query.filter_by(name=name).first()
+    if place:
+        place.rating = rating
+        db.session.commit()
+        return jsonify({'message': 'Rating updated successfully'}), 200
+
+    return jsonify({'message': 'Place not found'}), 404
+
 
 @app.route('/signup', methods=['GET', 'POST'])
 def register():
