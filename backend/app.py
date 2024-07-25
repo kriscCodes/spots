@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
-from places import get_places, get_photo
+from places import get_locations, get_photo
 from dynamic_search import DynamicSearch
 from serpapi import GoogleSearch
 from config import Config
@@ -33,25 +33,27 @@ class User(UserMixin, db.Model):
     visibility = db.Column(db.Boolean, nullable=False, default=True)
     # JSON is how sqlite allows for arrays
     friends = db.Column(db.JSON, nullable=False, default=list)
-    events = db.Column(db.JSON, nullable=False, default=list)
-    locations = db.Column(db.JSON, nullable=False, default=list)
+    places = db.Column(db.JSON, nullable=False, default=dict)
+    # events = db.Column(db.JSON, nullable=False, default=list)
+    # locations = db.Column(db.JSON, nullable=False, default=list)
 
 
 class Locations(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, nullable=True)
     location = db.Column(db.String(200), unique=True, nullable=False)
     places = db.relationship('Places', backref='location', lazy=True)
-    # events = db.relationship('Events', backref='location', lazy=True)
 
 
 class Places(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    isRestaurant = db.Column(db.Integer, nullable=False)
     name = db.Column(db.String(100), nullable=False)
     address = db.Column(db.String(200), nullable=False)
     img_url = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(255), nullable=False)
+    rating = db.Column(db.Numeric(precision=5, scale=2), nullable=False, default=0)
+    reviews = db.Column(db.JSON, nullable=False, default=list)
     location_id = db.Column(db.Integer, db.ForeignKey('locations.id'), nullable=False)
-
 
 
 def create_tables():
@@ -61,6 +63,57 @@ def create_tables():
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
+@app.route('/api/is-logged-in', methods=['GET'])
+def is_logged_in():
+    is_logged_in = current_user.is_authenticated
+    return jsonify({'loggedIn': is_logged_in})
+
+
+@app.route('/api/get-user', methods=['GET'])
+def get_user_api():
+    is_logged_in = current_user.is_authenticated
+    if is_logged_in:
+        username = current_user.username
+        return jsonify({'username': username, 'places': current_user.places})
+
+    return jsonify({}), 401
+
+
+@app.route('/api/update-locations', methods=['POST'])
+def update_user_locations():
+    data = request.json
+    username = data['user']
+    place_name = data['name']
+    new_status = data['status']
+    new_message = data.get('message', None)
+    print(username, place_name, new_status, new_message)
+
+    user = User.query.filter_by(username=username).first()
+    place = Places.query.filter_by(name=place_name).first()
+    if place and user:
+        if not user.places:
+            user.places = {}
+
+        existing_entry = user.places.get(place.id, {})
+        print('existing_entry', existing_entry)
+
+        updated_entry = {
+            'status': new_status,
+            'message': new_message if new_message is not None else existing_entry.get('message', '')
+        }
+
+        print('updated_entry', updated_entry)
+
+        user.places[place.id] = updated_entry
+        db.session.flush()
+        db.session.commit()
+        print(user.places)
+        return jsonify({'places': user.places}), 200
+
+    return jsonify({'message': 'User or Place not found'}), 404
+
 
 # Serves react pages
 @app.route('/', defaults={'path': ''})
@@ -73,21 +126,18 @@ def serve(path):
         return send_from_directory(app.static_folder, 'index.html')
 
 
-@app.route('/api/locations', methods=['GET', 'POST'])
-def get_locations():
+@app.route('/api/locations-events', methods=['POST'])
+def get_locations_events():
     data = request.json
-    curr_location = data['location']
-    print(curr_location)
-    location = Locations.query.filter_by(location=curr_location).first()
-    if location:
-        print('found location for ', location)
-        # print('these are the places', location.places)
-        places = format_places(location.places)
+    location = data['location']
+    print('Getting location for', location)
+    record = Locations.query.filter_by(location=location).first()
+    if record:
+        print('found', location, 'in our records')
+        places = format_places(record.places)
     else:
-        print('didn"t find location for', curr_location)
-        # loop = asyncio.get_event_loop()
-        # places = loop.run_until_complete(fetch_store_places(curr_location))
-        places = fetch_store_places(curr_location)
+        print('did not find', location, 'in our records')
+        places, loc, evnt = fetch_store_places(location)
 
     return jsonify(places=places), 200
 
@@ -98,64 +148,126 @@ def format_places(places):
         'name': place.name,
         'address': place.address,
         'img_url': place.img_url,
-        'description': place.description
+        'description': place.description,
+        'isRestaurant': place.isRestaurant
     } for place in places]
 
 
-def fetch_store_places(curr_location):
+def fetch_store_places(location):
     places = []
-    print('fetching...')
-    fetched_places = get_places('restaurant', 'restaurant', curr_location)
-    print('done fetching')
-    # print('results are ', fetched_places)
+    loc_status = 200
+    evnt_status = 200
+    print('fetching locations')
+    locations = get_locations('restaurant', 'restaurant', location)
+    print('locations', locations)
+    print('fetching events')
+    events = get_events(location)
+    print('events', events)
+
     try:
-        new_location = Locations.query.filter_by(location=curr_location).first()
+        new_location = Locations.query.filter_by(location=location).first()
         if not new_location:
-            new_location = Locations(location=curr_location)
+            new_location = Locations(location=location)
             db.session.add(new_location)
-            # await db.session.flush()
             db.session.flush()
 
-        for idx, fetched_place in enumerate(fetched_places):
-            # print(idx, fetched_place)
-            place = create_place_dict(fetched_place, new_location.id)
-            if place:
-                places.append(place)
-                new_place = Places(**place)
-                db.session.add(new_place)
+        if locations:
+            for idx, loc in enumerate(locations):
+                place = create_location_dict(loc, new_location.id)
+                if place:
+                    places.append(place)
+                    new_place = Places(**place)
+                    db.session.add(new_place)
+        else:
+            loc_status = 404
+
+        if events:
+            for idx, evnt in enumerate(events):
+                place = create_event_dict(evnt, new_location.id)
+                if place:
+                    places.append(place)
+                    new_place = Places(**place)
+                    db.session.add(new_place)
+        else:
+            evnt_status = 404
 
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        print("db error 2", e)
-        return []
+        print('db error, rolling back', e)
+        return [], 500, 500
 
-    return places
+    return places, loc_status, evnt_status
 
 
-def create_place_dict(fetched_place, location_id):
-    if 'name' not in fetched_place:
+def create_event_dict(place, id):
+    if 'title' not in place:
         return None
-    photo_url = ""
-    if 'photos' in fetched_place and fetched_place['photos'][0]:
-        photo_url = get_photo_url(fetched_place['photos'][0])
 
     return {
-        'name': fetched_place['name'],
-        'address': fetched_place.get('vicinity', ""),
+        'name': place.get('title'),
+        'address': place.get('address', [""])[0],
+        'img_url': place.get('thumbnail', ""),
+        'description': f'Description for {place.get("title")}',
+        'isRestaurant': 0,
+        'location_id': id
+    }
+
+
+def create_location_dict(place, id):
+    if 'name' not in place:
+        print('name not found')
+        return None
+
+    photo_url = ""
+    inside = 'photos' in place
+    print('inside', inside)
+    if 'photos' in place and place['photos'][0]:
+        print('ref', place['photos'][0])
+        photo_url = get_photo_url(place['photos'][0])
+
+    return {
+        'name': place.get('name'),
+        'address': place.get('vicinity', ""),
         'img_url': photo_url,
-        'description': f'Description for {fetched_place["name"]}',
-        'location_id': location_id
+        'description': f'Description for {place.get("name")}',
+        'isRestaurant': 1,
+        'location_id': id
     }
 
 def get_photo_url(photo):
+    print('photoo',photo)
     if photo and 'photo_reference' in photo:
+        ref = 'photo_reference' in photo
+        print('ref?', ref)
         height = photo.get('height')
         width = photo.get('width')
         photo_id = photo.get('photo_reference')
+        print('stuff', height, width, photo_id)
         return get_photo(photo_id, height, width)
 
     return ""
+
+
+def get_events(location):
+    params = {
+        "api_key": Config.GOOGLE_SEARCH_API,
+        "engine": "google_events",
+        "q": location,
+        "hl": "en",
+        "google_domain": "google.com",
+        "gl": "us",
+        "start": "0"
+    }
+
+    response = GoogleSearch(params)
+    results = response.get_dict()
+    events = results['events_results']
+
+    if not events:
+        return None
+
+    return events
 
 
 @app.route('/api/query', methods=['POST'])
@@ -171,6 +283,37 @@ def query():
         return Response(json_data, mimetype='application/json'), 200
 
     return jsonify(body=""), 204
+
+
+@app.route('/api/place-rating-reviews', methods=['POST'])
+def get_rating_reviews():
+    data = request.json
+    name = data['name']
+
+    place = Places.query.filter_by(name=name).first()
+    if place:
+        rating = place.rating
+        reviews = place.reviews
+
+        return jsonify(rating=rating, reviews=reviews)
+
+    return jsonify({}), 404
+
+
+@app.route('/api/set-rating', methods=['POST'])
+def set_rating():
+    data = request.json
+    name = data['name']
+    rating = data['rating']
+
+    place = Places.query.filter_by(name=name).first()
+    if place:
+        place.rating = rating
+        db.session.commit()
+        return jsonify({'message': 'Rating updated successfully'}), 200
+
+    return jsonify({'message': 'Place not found'}), 404
+
 
 @app.route('/signup', methods=['GET', 'POST'])
 def register():
@@ -327,33 +470,6 @@ def update_email(username):
 def logout():
     logout_user()
     return jsonify({'message': 'Logged out successfully'}), 200
-
-@app.route('/api/search', methods=['POST', 'GET'])
-def search():
-    # if request.method == 'GET':
-    #    return render_template('search.html')
-    # if request.method == 'POST':
-    # loc = request.form['searchbox']
-    data = request.json
-    # print(data)
-    loc = data['location']
-    print('google search for', loc)
-    params = {
-        "api_key": Config.GOOGLE_SEARCH_API,
-        "engine": "google_events",
-        "q": loc,
-        "hl": "en",
-        "google_domain": "google.com",
-        "gl": "us",
-        "start": "0"
-    }
-    search = GoogleSearch(params)
-    results = search.get_dict()
-    events = results['events_results']
-    # print('google events results', results)
-    # print('google events', events)
-
-    return jsonify(loc=loc, events=events), 200
 
 
 if __name__ == '__main__':

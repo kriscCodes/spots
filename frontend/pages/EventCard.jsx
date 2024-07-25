@@ -9,7 +9,6 @@ function EventCard (props) {
     console.log('type', typeof props.data);
     console.log('data', props.data);
     const [showCard, setShowCard] = useState(false);
-    const [isRestaurant, setIsRestaurant] = useState(!!props.data.name);
 
     const navigate = useNavigate();
 
@@ -31,11 +30,11 @@ function EventCard (props) {
         setTimeout(() => {
             navigate('/event', {
                 state: {
-                    eventName: isRestaurant ? props.data.name : props.data.title,
-                    address: isRestaurant ? props.data.address : props.data.address[0] || "No address",
-                    desc: isRestaurant ? props.data.description : props.data.description || `Description for ${props.data.title}`,
-                    imgUrl: isRestaurant ? props.data.img_url : props.data.thumbnail || null,
-                    isRestaurant: isRestaurant
+                    name: props.data.isRestaurant ? props.data.name : props.data.title,
+                    address: props.data.isRestaurant ? props.data.address : props.data.address[0] || "No address",
+                    desc: props.data.isRestaurant ? props.data.description : props.data.description || `Description for ${props.data.title}`,
+                    imgUrl: props.data.isRestaurant ? props.data.img_url : props.data.thumbnail || null,
+                    isRestaurant: props.data.isRestaurant === 1
                 }
             });
         }, 450);
@@ -61,7 +60,7 @@ function EventCard (props) {
                         <p
                             className='font-light'
                         >
-                            {isRestaurant ? 'RESTAURANT' : 'EVENT'}
+                            {props.data.isRestaurant ? 'RESTAURANT' : 'EVENT'}
                         </p>
                         <p
                             className='font-bold text-lg overflow-hidden overflow-ellipsis whitespace-nowrap'
@@ -71,7 +70,7 @@ function EventCard (props) {
                         <p
                             className='font-light text-sm'
                         >
-                            {isRestaurant ? props.data.address : (props.data.address)[0]}
+                            {props.data.isRestaurant ? props.data.address : props.data.address}
                         </p>
                     </div>
 

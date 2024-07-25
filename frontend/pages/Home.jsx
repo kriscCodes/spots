@@ -86,7 +86,7 @@ function Home () {
     const debouncedSetQuery = debounce(query => {
         dispatch({type: actionTypes.SET_QUERY, payload: query});
         getSuggestions(query);
-    }, 50);
+    }, 30);
 
     const handleSearchbarChange = (event) => {
         debouncedSetQuery(event.target.value);
