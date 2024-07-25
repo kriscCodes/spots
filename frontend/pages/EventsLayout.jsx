@@ -14,19 +14,24 @@ const actionTypes = {
     SET_LOCATIONS: 'SET_LOCATIONS',
     SET_HAS_LOCATIONS: 'SET_HAS_LOCATIONS',
     SET_EVENTS: 'SET_EVENTS',
-    ADD_ITEMS: 'ADD_ITEMS'
+    ADD_ITEMS: 'ADD_ITEMS',
+    SET_ALL: 'SET_ALL'
 }
 
 const reducer = (state, action) => {
     switch (action.type) {
         case actionTypes.EVENT_CLICKED:
             return { ...state, clickedId: action.payload };
+        case actionTypes.SET_LOADING:
+            return { ...state, loading: false };
         // case actionTypes.SET_LOCATIONS:
         //     return { ...state, allEventsLocations: action.payload, loading: false, hasLocations: action.payload.length !== 0 };
         // case actionTypes.SET_EVENTS:
         //     return { ...state, allEventsLocations: state.locations.append()};
-        case actionTypes.ADD_ITEMS:
-            return { ...state, allEventsLocations: [ ...state.allEventsLocations, ...action.payload], loading: false }
+        // case actionTypes.ADD_ITEMS:
+        //     return { ...state, allEventsLocations: [ ...state.allEventsLocations, ...action.payload], loading: false }
+        case actionTypes.SET_ALL:
+            return { ...state, allEventsLocations: action.payload };
         default:
             return { ...state };
     }
@@ -41,66 +46,104 @@ function EventsLayout (props) {
     }
 
     useEffect(() => {
-        const getLocations = async (query) => {
+        const fetchEventsLocations = async (query) => {
             try {
-                await fetch('http://127.0.0.1:2700/api/locations', {
+                await fetch ('http://127.0.0.1:2700/api/locations-events', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({location: query})
                 })
                     .then(response => {
-                        if (response.ok) {
-                            return response.json();
-                        }
-                        // dispatch({type: actionTypes.SET_HAS_LOCATIONS, payload: false})
-                        throw new Error('could not fetch locations via api');
-                    })
+                            if (response.ok) {
+                                return response.json();
+                            }
+                            // dispatch({type: actionTypes.SET_HAS_LOCATIONS, payload: false})
+                            throw new Error('could not fetch locations via api');
+                        })
                     .then(data => {
                         if (!data) {
                             // dispatch({type: actionTypes.SET_HAS_LOCATIONS, payload: false})
                             throw new Error('no data found');
                         }
                         console.log(data['places']);
+                        dispatch({type: actionTypes.SET_ALL, payload: data['places']});
                         // dispatch({type: actionTypes.SET_LOCATIONS, payload: data['places']});
-                        dispatch({type: actionTypes.ADD_ITEMS, payload: data['places']});
-
+                        // dispatch({type: actionTypes.ADD_ITEMS, payload: data['places']});
                     })
             } catch (e) {
-                console.error('Error could not get locations:', e);
-            }
-        }
-
-        getLocations(props.query);
-    }, []);
-
-    useEffect(() => {
-        const getGoogleEvents = async (query) => {
-            try {
-                await fetch('http://127.0.0.1:2700/api/search', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({location: query})
-                })
-                    .then(response => {
-                        if (response.status === 200) {
-                            return response.json();
-                        }
-                        throw new Error('Failed to fetch events from search api');
-                    })
-                    .then(data => {
-                        if(!data) {
-                            throw new Error('no events found');
-                        }
-                        console.log('events', data['events']);
-                        dispatch({type: actionTypes.ADD_ITEMS, payload: data['events']});
-                    })
-            } catch (e) {
-                console.error('Error in getting events');
+                console.log('Error fetching events or locations', e);
             }
         };
 
-        getGoogleEvents(props.query);
-    }, []);
+        fetchEventsLocations(props.query);
+        const timer = setTimeout( () => {
+            dispatch({type: actionTypes.SET_LOADING, payload: false});
+        }, 3500);
+
+        return () => clearTimeout(timer);
+    }, [])
+
+    // useEffect(() => {
+    //     const getLocations = async (query) => {
+    //         try {
+    //             await fetch('http://127.0.0.1:2700/api/locations', {
+    //                 method: 'POST',
+    //                 headers: {'Content-Type': 'application/json'},
+    //                 body: JSON.stringify({location: query})
+    //             })
+    //                 .then(response => {
+    //                     if (response.ok) {
+    //                         return response.json();
+    //                     }
+    //                     // dispatch({type: actionTypes.SET_HAS_LOCATIONS, payload: false})
+    //                     throw new Error('could not fetch locations via api');
+    //                 })
+    //                 .then(data => {
+    //                     if (!data) {
+    //                         // dispatch({type: actionTypes.SET_HAS_LOCATIONS, payload: false})
+    //                         throw new Error('no data found');
+    //                     }
+    //                     console.log(data['places']);
+    //                     // dispatch({type: actionTypes.SET_LOCATIONS, payload: data['places']});
+    //                     dispatch({type: actionTypes.ADD_ITEMS, payload: data['places']});
+    //
+    //                 })
+    //         } catch (e) {
+    //             console.error('Error could not get locations:', e);
+    //         }
+    //     }
+    //
+    //     getLocations(props.query);
+    // }, []);
+
+    // useEffect(() => {
+    //     const getGoogleEvents = async (query) => {
+    //         try {
+    //             await fetch('http://127.0.0.1:2700/api/search', {
+    //                 method: 'POST',
+    //                 headers: {'Content-Type': 'application/json'},
+    //                 body: JSON.stringify({location: query})
+    //             })
+    //                 .then(response => {
+    //                     if (response.status === 200) {
+    //                         return response.json();
+    //                     }
+    //                     throw new Error('Failed to fetch events from search api');
+    //                 })
+    //                 .then(data => {
+    //                     if(!data) {
+    //                         throw new Error('no events found');
+    //                     }
+    //                     console.log('events', data['events']);
+    //                     dispatch({type: actionTypes.ADD_ITEMS, payload: data['events']});
+    //                 })
+    //         } catch (e) {
+    //             console.error('Error in getting events');
+    //         }
+    //     };
+    //
+    //     getGoogleEvents(props.query);
+    // }, []);
 
     // useEffect(() => {
     //     if (state.loadLocations && state.loadEvents) {
@@ -110,14 +153,19 @@ function EventsLayout (props) {
 
     return (
         <div
-            className='overflow-scroll flex gap-2'
+            className='overflow-scroll h-full flex gap-2'
         >
             <div
-                className={`w-3/4 ${state.loading || state.allEventsLocations.length <= 0 ? 'flex items-center justify-center h-full p-2' : ''}`}
+                // className={`w-3/4 ${state.loading || state.allEventsLocations.length <= 0 ? 'flex items-center justify-center h-full p-2' : ''}`}
+                className={`w-3/4 h-full p-2`}
             >
                 {
                     state.loading ?
-                        <PropagateLoader loading={state.loading}/> :
+                        <div
+                            className='w-full h-full flex items-center justify-center'
+                        >
+                            <PropagateLoader loading={state.loading} />
+                        </div> :
                         state.allEventsLocations.length > 0 ?
                             <div
                                 className='grid grid-cols-3 gap-5 px-4 w-full overflow-scroll'

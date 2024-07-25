@@ -1,6 +1,7 @@
 import os
 import geocoder
 import requests
+from config import Config
 
 
 def get_user_location():
@@ -22,9 +23,10 @@ def get_coord(location):
     return g.lat, g.lng
 
 
-def get_places(keyword, type, location):
-    key = os.getenv('GOOGLE_KEY')
+def get_locations(keyword, type, location):
+    key = os.getenv('GOOGLE_KEY') or Config.GOOGLE_MAPS_API
     lat, lon = get_coord(location)
+    print(lat, lon)
     request = ('https://maps.googleapis.com/maps/api/place/nearbysearch/json'
                f'?keyword={keyword}'
                f'&location={lat}%2C{lon}'
@@ -32,12 +34,11 @@ def get_places(keyword, type, location):
                f'&type={type}'
                f'&key={key}')
 
-    res = requests.get(request)
-    res = res.json()
-    # print('printing resjson', res)
+    response = requests.get(request)
+    result = response.json()
+    locations = result['results']
 
-    print('length of results, ', len(res["results"]))
-    return res['results']
+    return locations
 
 
 def get_photo(id, height, width):
