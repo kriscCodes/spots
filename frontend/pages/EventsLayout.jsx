@@ -54,7 +54,6 @@ function EventsLayout (props) {
                         if (!data) {
                             throw new Error('no data found');
                         }
-                        console.log(data['places']);
                         dispatch({type: actionTypes.SET_ALL, payload: data['places']});
                     })
             } catch (e) {

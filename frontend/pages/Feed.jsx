@@ -2,17 +2,21 @@ import {useParams} from "react-router-dom";
 import {useEffect, useReducer, useState} from "react";
 import FriendsFeed from "./FriendsFeed.jsx";
 import NearbyFeed from "./NearbyFeed.jsx";
+import Rating from "@mui/material/Rating";
+import StarIcon from "@mui/icons-material/Star";
 
 const initState = {
     username: '',
     userData: {},
-    onNearbyFeed: true
+    onNearbyFeed: true,
+    filterRating: 0
 }
 
 const types = {
     SET_USER: 'SET_USER',
     SET_DATA: 'SET_DATA',
-    SET_ON_NEARBY_FEED: 'SET_ON_NEARBY_FEED'
+    SET_ON_NEARBY_FEED: 'SET_ON_NEARBY_FEED',
+    SET_RATING: 'SET_RATING'
 }
 
 const reducer = (state, action) => {
@@ -23,6 +27,8 @@ const reducer = (state, action) => {
             return { ...state, userData: action.pl };
         case types.SET_ON_NEARBY_FEED:
             return { ...state, onNearbyFeed: action.pl };
+        case types.SET_RATING:
+            return { ...state, filterRating: action.pl };
         default:
             return { ...state };
     }
@@ -57,7 +63,7 @@ function Feed () {
             }
         }
 
-        // fetchUserInfo();
+        fetchUserInfo();
         const mock = {
             'id': 1,
             'username': 'dj',
@@ -74,7 +80,7 @@ function Feed () {
                 'names': ['Restaurant']
             }
         }
-        dp({type: types.SET_DATA, pl: mock});
+        // dp({type: types.SET_DATA, pl: mock});
     }, [])
 
     const handleTabClick = (tabName) => {
@@ -86,13 +92,17 @@ function Feed () {
         }
     }
 
+    const handleChangeReview = (newRating) => {
+        dp({type: types.SET_RATING, pl: newRating });
+    }
+
 
     return (
         <div
             className='relative w-full h-screen flex'
         >
             <div
-                className='w-3/4 pr-2 mb-10'
+                className='w-full pr-2 mb-10'
             >
                 <header
                     className='h-fit pt-2 px-5 flex items-center'
@@ -127,16 +137,11 @@ function Feed () {
                 >
                     {
                         state.onNearbyFeed ?
-                            <NearbyFeed data={state.userData} /> :
+                            <NearbyFeed data={state.userData} filter={state.filterRating} /> :
                             <FriendsFeed data={state.userData.friends.ids} />
 
                     }
                 </div>
-            </div>
-            <div
-                className='w-1/4'
-            >
-                Account stuff
             </div>
         </div>
     )

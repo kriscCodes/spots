@@ -9,8 +9,8 @@ function Navigation () {
 
 
     const logout = async () => {
-        await fetch('/logout', {
-            method: 'GET',
+        await fetch('http://127.0.0.1:2700/api/logout', {
+            method: 'POST',
             credentials: 'include'
         });
         setIsLoggedIn(false);
@@ -56,13 +56,16 @@ function Navigation () {
             }
         };
 
+        console.log('1', isLoggedIn)
         if (isLoggedIn) {
+            console.log('2', isLoggedIn)
+
             getUserInfo();
         } else {
             checkLoginStatus();
         }
 
-    }, [isLoggedIn]);
+    }, []);
 
     return (
         <div className='w-full py-2 px-5 flex'>
@@ -90,6 +93,12 @@ function Navigation () {
                             className='bg-[#E9E9E9] rounded-lg px-3 py-1 hover:bg-[#B8B8B8]'
                             to={`/feed/:${username}`}>Feed
                         </Link>
+                        <button
+                            className='bg-[#E9E9E9] rounded-lg px-3 py-1 hover:bg-[#B8B8B8]'
+                            onClick={logout}
+                        >
+                            Log out
+                        </button>
                     </div>
                 )
             }
@@ -105,6 +114,26 @@ function Navigation () {
             }
             {
                 location.pathname === `/feed/:${username}` && (
+                    <div
+                        className="w-full flex items-center justify-between gap-2 py-2"
+                    >
+                        <Link
+                            className='rounded-lg px-2 text-xl'
+                            to='/'
+                        >
+                            SPOTS
+                        </Link>
+                        <button
+                            className='bg-[#E9E9E9] rounded-lg px-3 py-1 hover:bg-[#B8B8B8]'
+                            onClick={logout}
+                        >
+                            Log out
+                        </button>
+                    </div>
+                )
+            }
+            {
+                location.pathname === `/user/${username}` && (
                     <div
                         className="w-full flex items-center justify-between gap-2 py-2"
                     >

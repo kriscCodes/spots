@@ -14,6 +14,11 @@ def get_state():
     return g.state
 
 
+def get_addr():
+    g = geocoder.ip('me')
+    return g.address
+
+
 def get_city():
     g = geocoder.ip('me')
     return g.city
@@ -61,4 +66,6 @@ if __name__ == '__main__':
     # restaurants = get_nearby_places(GOOGLE_KEY, 'restaurants', 'restaurant')
     # for restaurant in restaurants:
     #     print(restaurant['name'])
-    print(get_state())
+    # print(get_state())
+    # print(get_postal())
+    print(get_county())

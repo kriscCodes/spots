@@ -1,11 +1,11 @@
 import os, json, pprint, asyncio
-from flask import Flask, render_template, redirect, url_for, request, flash, send_from_directory, jsonify, Response
+from flask import Flask, render_template, redirect, url_for, request, flash, send_from_directory, jsonify, Response, session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm.attributes import flag_modified
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
-from places import get_locations, get_photo
+from places import get_locations, get_photo, get_addr
 from dynamic_search import DynamicSearch
 from serpapi import GoogleSearch
 from config import Config
@@ -36,6 +36,8 @@ class User(UserMixin, db.Model):
     # JSON is how sqlite allows for arrays
     friends = db.Column(db.JSON, nullable=False, default=list)
     places = db.Column(db.JSON, nullable=False, default=dict)
+    reviews = db.relationship('Review', back_populates='user', lazy=True)
+    # reviews = db.Column(db.JSON, nullable=False, default=dict)
     # events = db.Column(db.JSON, nullable=False, default=list)
     # locations = db.Column(db.JSON, nullable=False, default=list)
 
@@ -54,8 +56,20 @@ class Places(db.Model):
     img_url = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(255), nullable=False)
     rating = db.Column(db.Numeric(precision=5, scale=2), nullable=False, default=0)
-    reviews = db.Column(db.JSON, nullable=False, default=list)
     location_id = db.Column(db.Integer, db.ForeignKey('locations.id'), nullable=False)
+
+    reviews = db.relationship('Review', back_populates='place', lazy=True)
+
+
+class Review(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    place_id = db.Column(db.Integer, db.ForeignKey('places.id'), nullable=False)
+    comment = db.Column(db.String(500), nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp(), nullable=False)
+
+    user = db.relationship('User', back_populates='reviews')
+    place = db.relationship('Places', back_populates='reviews')
 
 
 def create_tables():
@@ -64,12 +78,15 @@ def create_tables():
 
 @login_manager.user_loader
 def load_user(user_id):
+    print('loading user', user_id)
     return User.query.get(int(user_id))
 
 
 @app.route('/api/is-logged-in', methods=['GET'])
 def is_logged_in():
     is_logged_in = current_user.is_authenticated
+    print('logged in', is_logged_in)
+    print('Current user:', current_user if current_user.is_authenticated else 'None')
     return jsonify({'loggedIn': is_logged_in})
 
 
@@ -83,13 +100,75 @@ def get_user_api():
     return jsonify({}), 401
 
 
+@app.route('/api/set-review', methods=['POST'])
+def set_reviews():
+    data = request.json
+    username = data['user']
+    place_name = data['name']  # Assuming the correct place name is passed in the request
+    new_comment = data['review']
+
+    user = User.query.filter_by(username=username).first()
+    place = Places.query.filter_by(name=place_name).first()
+
+    if user and place:
+        review = Review.query.filter_by(user_id=user.id, place_id=place.id).first()
+
+        if review:
+            # Update existing review
+            review.comment = new_comment
+        else:
+            # Create new review
+            review = Review(user_id=user.id, place_id=place.id, comment=new_comment)
+            db.session.add(review)
+
+        db.session.commit()
+
+        # Retrieve all reviews for the place
+        reviews = Review.query.filter_by(place_id=place.id).all()
+        reviews_list = [
+            {
+                'username': User.query.filter_by(id=review.user_id).first().username,
+                'comment': review.comment,
+                'created_at': review.created_at
+            } for review in reviews
+        ]
+
+        return jsonify({'reviews': reviews_list}), 200
+
+    return jsonify({'message': 'User or Place not found'}), 404
+
+
+# @app.route('/api/set-review', methods=['POST'])
+# def set_reviews():
+#     data = request.json
+#     username = data['user']
+#     place_id = data['name']
+#     new_review = data['review']
+#
+#     user = User.query.filter_by(username=username).first()
+#
+#     if user and place_id:
+#
+#         old_reviews = user.reviews
+#         old_reviews[place_id] = new_review
+#         user.reviews = old_reviews
+#         flag_modified(user, "reviews")
+#         db.session.flush()
+#         db.session.commit()
+#         print('reviews', user.reviews)
+#         return jsonify({'reviews':  user.reviews}), 200
+#
+#     return jsonify({'message': 'User or Place not found'}), 404
+
+
+
+
 @app.route('/api/update-locations', methods=['POST'])
 def update_place():
     data = request.json
     username = data['user']
     place_id = data['name']
     new_status = data['status']
-    new_message = data.get('message')
 
     user = User.query.filter_by(username=username).first()
 
@@ -98,7 +177,6 @@ def update_place():
         place_entry = user.places.get(place_id, {})
 
         place_entry['status'] = new_status
-        place_entry['message'] = new_message if new_message is not None else place_entry.get('message', '')
 
         old_places = user.places
         print('old_places', old_places, 'type', type(old_places))
@@ -121,6 +199,28 @@ def serve(path):
         return send_from_directory(app.static_folder, path)
     else:
         return send_from_directory(app.static_folder, 'index.html')
+
+
+@app.route('/api/get-nearby-places', methods=['GET'])
+def get_nearby_places():
+    location = get_addr()
+
+    record = Locations.query.filter_by(location=location).first()
+    if record:
+        print('found', location, 'in our records')
+        places = format_places(record.places)
+    else:
+        print('did not find', location, 'in our records')
+        places, loc, evnt = fetch_store_places(location)
+
+    if places:
+        for idx, place in enumerate(places):
+            name = place['name']
+            record_place = Places.query.filter_by(name=name).first()
+            rating = record_place.rating
+            place['rating'] = rating
+
+    return jsonify(places=places), 200
 
 
 @app.route('/api/locations-events', methods=['POST'])
@@ -154,12 +254,12 @@ def fetch_store_places(location):
     places = []
     loc_status = 200
     evnt_status = 200
-    print('fetching locations')
+    # print('fetching locations')
     locations = get_locations('restaurant', 'restaurant', location)
     print('locations', locations)
-    print('fetching events')
+    # print('fetching events')
     events = get_events(location)
-    print('events', events)
+    # print('events', events)
 
     try:
         new_location = Locations.query.filter_by(location=location).first()
@@ -290,9 +390,16 @@ def get_rating_reviews():
     place = Places.query.filter_by(name=name).first()
     if place:
         rating = place.rating
-        reviews = place.reviews
+        reviews = Review.query.filter_by(place_id=place.id).all()
+        reviews_list = [
+            {
+                'username': User.query.filter_by(id=review.user_id).first().username,
+                'comment': review.comment,
+                'created_at': review.created_at
+            } for review in reviews
+        ]
 
-        return jsonify(rating=rating, reviews=reviews)
+        return jsonify(rating=rating, reviews=reviews_list)
 
     return jsonify({}), 404
 

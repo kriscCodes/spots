@@ -6,8 +6,6 @@ import {useNavigate} from "react-router-dom";
 
 function EventCard (props) {
 
-    console.log('type', typeof props.data);
-    console.log('data', props.data);
     const [showCard, setShowCard] = useState(false);
 
     const navigate = useNavigate();
