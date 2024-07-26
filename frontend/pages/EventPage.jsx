@@ -146,7 +146,7 @@ function EventPage () {
             })
             if (response.ok) {
                 const data = await response.json()
-                // console.log(data);
+                console.log(data);
                 console.log('Saved updated successfully');
             } else {
                 console.error('Failed to update Saved');
