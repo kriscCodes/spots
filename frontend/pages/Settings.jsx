@@ -191,13 +191,8 @@ const handleNameSubmit = async (e) => {
 				<div className="w-1/4 flex gap-5 justify-start">
 					<h3 className="text py-1">Email: </h3>
 					{emailForm ? (
-						<form onSubmit={handleEmailSubmit} method="PUT">
-							<input
-								className="p-1 bg-[#F8F8F8] rounded-sm shadow-md shadow-[#C9C9C9]"
-								onChange={handleEmailChange}
-								value={email}
-								type="text"
-							></input>
+						<form>
+							<input className="flex-1" type="text"></input>
 						</form>
 					) : (
 						<button

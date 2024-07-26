@@ -20,7 +20,6 @@ function App() {
 						<Route path="/login" element={<Login />} />
 						<Route path="/signup" element={<Signup />} />
 						<Route path="/event" element={<EventPage />} />
-						<Route path="/dashboard" element={<Dashboard />} />
 						<Route path="/user/:username" element={<UserProfile />} />
 						<Route path="/feed/:username" element={<Feed />} />
 						<Route path="/settings/:username" element={<Settings />} />
