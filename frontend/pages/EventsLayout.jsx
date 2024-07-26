@@ -61,12 +61,14 @@ function EventsLayout (props) {
             }
         };
 
-        fetchEventsLocations(props.query);
-        const timer = setTimeout( () => {
-            dispatch({type: actionTypes.SET_LOADING, payload: false});
-        }, 3500);
+        fetchEventsLocations(props.query).then( data => {
+            const timer = setTimeout( () => {
+                dispatch({type: actionTypes.SET_LOADING, payload: false});
+            }, 1000);
 
-        return () => clearTimeout(timer);
+        })
+
+        // return () => clearTimeout(timer);
     }, [])
 
 
@@ -76,7 +78,7 @@ function EventsLayout (props) {
         >
             <div
                 // className={`w-3/4 ${state.loading || state.allEventsLocations.length <= 0 ? 'flex items-center justify-center h-full p-2' : ''}`}
-                className={`w-3/4 h-full p-2`}
+                className={`w-full h-full p-2`}
             >
                 {
                     state.loading ?
@@ -105,11 +107,6 @@ function EventsLayout (props) {
                                 No locations found
                             </div>
                 }
-            </div>
-            <div
-                className='w-1/4 z-0'
-            >
-                Account
             </div>
         </div>
     )

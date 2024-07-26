@@ -120,14 +120,14 @@ function Feed () {
                         >
                             Near you
                         </span>
-                        <span
-                            className={`relative w-1/2 z-10 text-center
-                            ${!state.onNearbyFeed ? tabStyle : 'text-neutral-400'}`}
-                            // className={`w-1/2 text-center ${!state.onNearbyFeed ? 'font-semibold' : 'text-neutral-400'}`}
-                            onClick={() => handleTabClick('Friends')}
-                        >
-                            Friends
-                        </span>
+                        {/*<span*/}
+                        {/*    className={`relative w-1/2 z-10 text-center*/}
+                        {/*    ${!state.onNearbyFeed ? tabStyle : 'text-neutral-400'}`}*/}
+                        {/*    // className={`w-1/2 text-center ${!state.onNearbyFeed ? 'font-semibold' : 'text-neutral-400'}`}*/}
+                        {/*    onClick={() => handleTabClick('Friends')}*/}
+                        {/*>*/}
+                        {/*    Friends*/}
+                        {/*</span>*/}
                     </div>
                 </header>
                 <div
@@ -136,10 +136,9 @@ function Feed () {
 
                 >
                     {
-                        state.onNearbyFeed ?
-                            <NearbyFeed data={state.userData} filter={state.filterRating} /> :
-                            <FriendsFeed data={state.userData.friends.ids} />
-
+                        // state.onNearbyFeed ?
+                            <NearbyFeed data={state.userData} filter={state.filterRating} />
+                            // <FriendsFeed data={state.userData.friends.ids} />
                     }
                 </div>
             </div>

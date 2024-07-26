@@ -204,7 +204,7 @@ function EventPage () {
 
 
     return (
-        <div className='w-full h-full flex p-7'>
+        <div className='w-full h-full flex pl-7 pr-7 pb-7'>
             <div
                 className='flex flex-col items-center gap-2'
             >
@@ -234,28 +234,31 @@ function EventPage () {
                         </span>
                     }
                 </div>
-                <form
-                    className='w-full h-[100px] flex flex-col'
-                    onSubmit={(e) => handleReviewSubmit(e)}
-                >
-                    <input
-                        className='border-black border-[3px] p-3 rounded-lg'
-                        value={state.review}
-                        onChange={(e) => handleTypeReview(e.target.value)}
-                        type="text"
-                        placeholder='Add your review...'
-                    />
-                    <div
-                        className='flex justify-between p-2'
+                {
+                    state.user &&
+                    <form
+                        className='w-full h-[100px] flex flex-col'
+                        onSubmit={(e) => handleReviewSubmit(e)}
                     >
-                        <p>{parseInt(max) - parseInt(state.review.length)} chars left</p>
                         <input
-                            type="submit"
-                            className='px-2 py-1 transition shadow-md shadow-[#C9C9C9] bg-[#E9E9E9]
-                            hover:bg-[#B8B8B8] hover:cursor-pointer'
+                            className='border-black border-[3px] p-3 rounded-lg'
+                            value={state.review}
+                            onChange={(e) => handleTypeReview(e.target.value)}
+                            type="text"
+                            placeholder='Add your review...'
                         />
-                    </div>
-                </form>
+                        <div
+                            className='flex justify-between p-2'
+                        >
+                            <p>{parseInt(max) - parseInt(state.review.length)} chars left</p>
+                            <input
+                                type="submit"
+                                className='px-2 py-1 transition shadow-md shadow-[#C9C9C9] bg-[#E9E9E9]
+                                hover:bg-[#B8B8B8] hover:cursor-pointer'
+                            />
+                        </div>
+                    </form>
+                }
             </div>
             <div
                 className='w-full h-full flex flex-col p-5'

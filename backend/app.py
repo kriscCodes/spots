@@ -179,7 +179,7 @@ def update_place():
         place_entry['status'] = new_status
 
         old_places = user.places
-        print('old_places', old_places, 'type', type(old_places))
+        # print('old_places', old_places, 'type', type(old_places))
         old_places[place_id] = place_entry
         user.places = old_places
         flag_modified(user, "places")
@@ -256,7 +256,7 @@ def fetch_store_places(location):
     evnt_status = 200
     # print('fetching locations')
     locations = get_locations('restaurant', 'restaurant', location)
-    print('locations', locations)
+    # print('locations', locations)
     # print('fetching events')
     events = get_events(location)
     # print('events', events)
@@ -440,7 +440,7 @@ def register():
         db.session.add(new_user)
         db.session.commit()
         login_user(new_user)
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('serve'))
 
     return send_from_directory(app.static_folder, "index.html")
 
@@ -493,9 +493,7 @@ def userinfo(username):
         'email': user.email,
         'password': user.password,
         'visibility': user.visibility,
-        'friends': user.friends,
-        'events': user.events,
-        'locations': user.locations,
+        'places': user.places
     }
 
     return jsonify(user_data)

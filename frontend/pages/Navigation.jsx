@@ -7,6 +7,10 @@ function Navigation () {
     const [username, setUsername] = useState(null);
     const nav = useNavigate();
 
+    // console.log(location.pathname)
+    // console.log(`/user/${username}`)
+    // console.log(location.pathname === `/user/${username}`)
+
 
     const logout = async () => {
         await fetch('http://127.0.0.1:2700/api/logout', {
@@ -91,7 +95,11 @@ function Navigation () {
                     <div className="w-full flex items-center justify-end gap-2 py-2">
                         <Link
                             className='bg-[#E9E9E9] rounded-lg px-3 py-1 hover:bg-[#B8B8B8]'
-                            to={`/feed/:${username}`}>Feed
+                            to={`/user/:${username}`}>Profile
+                        </Link>
+                        <Link
+                            className='bg-[#E9E9E9] rounded-lg px-3 py-1 hover:bg-[#B8B8B8]'
+                            to={`/feed/:${username}`}>Dashboard
                         </Link>
                         <button
                             className='bg-[#E9E9E9] rounded-lg px-3 py-1 hover:bg-[#B8B8B8]'
@@ -113,7 +121,8 @@ function Navigation () {
                 </Link>
             }
             {
-                location.pathname === `/feed/:${username}` && (
+                // location.pathname === `/feed/:${username}` && (
+                location.pathname === `/dashboard` && (
                     <div
                         className="w-full flex items-center justify-between gap-2 py-2"
                     >
@@ -133,7 +142,7 @@ function Navigation () {
                 )
             }
             {
-                location.pathname === `/user/${username}` && (
+                (location.pathname === `/user/${username}` || location.pathname.includes('/feed/')) && (
                     <div
                         className="w-full flex items-center justify-between gap-2 py-2"
                     >
@@ -150,6 +159,46 @@ function Navigation () {
                             Log out
                         </button>
                     </div>
+                )
+            }
+            {
+                location.pathname.includes('/event') && isLoggedIn && (
+                    <div
+                        className="w-full flex items-center justify-between gap-2 py-2"
+                    >
+                        <Link
+                            className='rounded-lg px-2 text-xl'
+                            to='/'
+                        >
+                            SPOTS
+                        </Link>
+                        <div className="w-full flex items-center justify-end gap-2 py-2">
+                            <Link
+                                className='bg-[#E9E9E9] rounded-lg px-3 py-1 hover:bg-[#B8B8B8]'
+                                to={`/user/:${username}`}>Profile
+                            </Link>
+                            <Link
+                                className='bg-[#E9E9E9] rounded-lg px-3 py-1 hover:bg-[#B8B8B8]'
+                                to={`/feed/:${username}`}>Dashboard
+                            </Link>
+                            <button
+                                className='bg-[#E9E9E9] rounded-lg px-3 py-1 hover:bg-[#B8B8B8]'
+                                onClick={logout}
+                            >
+                                Log out
+                            </button>
+                        </div>
+                    </div>
+                )
+            }
+            {
+            location.pathname.includes('/event') && !isLoggedIn && (
+                    <Link
+                        className='rounded-lg px-2 text-xl'
+                        to='/'
+                    >
+                        SPOTS
+                    </Link>
                 )
             }
         </div>
