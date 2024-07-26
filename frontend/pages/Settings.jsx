@@ -17,7 +17,7 @@ const Settings = () => {
 			console.log(username);
 			try {
 				const response = await axios.get(
-					`http://127.0.0.1:2700/api/user/${username}`
+					`https://spots.pythonanywhere.com/api/user/${username}`
 				);
 				setUser({ ...response.data });
 				console.log(response.data);
@@ -34,7 +34,7 @@ const Settings = () => {
 	const handlePrivacy = async () => {
 		// make call here to udpate users privacy in database
 		try {
-			await axios.put(`http://127.0.0.1:2700/api/user/${username}/privacy`, {
+			await axios.put(`https://spots.pythonanywhere.com/api/user/${username}/privacy`, {
 				visibility: !privacy,
 			});
 			console.log(user.visibility);
@@ -72,7 +72,7 @@ const handleNameSubmit = async (e) => {
         console.log("Current username:", username);
         console.log("New username:", name);
         const response = await axios.put(
-            `http://127.0.0.1:2700/api/user/${username}/username`,
+            `https://spots.pythonanywhere.com/api/user/${username}/username`,
             {
                 user_name: name,
             }
@@ -87,7 +87,7 @@ const handleNameSubmit = async (e) => {
 
             console.log("Attempting to log out...");
             try {
-                const logoutResponse = await axios.post('http://127.0.0.1:2700/api/logout');
+                const logoutResponse = await axios.post('https://spots.pythonanywhere.com/api/logout');
                 console.log("Logout response:", logoutResponse);
                 if (logoutResponse.status === 200) {
                     console.log("Logout successful");
@@ -119,7 +119,7 @@ const handleNameSubmit = async (e) => {
         console.log("Current username:", username);
         console.log("New email:", email);
         const response = await axios.put(
-            `http://127.0.0.1:2700/api/user/${username}/email`,
+            `https://spots.pythonanywhere.com/api/user/${username}/email`,
             {
                 email: email,
             }
@@ -134,7 +134,7 @@ const handleNameSubmit = async (e) => {
 
             console.log("Attempting to log out...");
             try {
-                const logoutResponse = await axios.post('http://127.0.0.1:2700/api/logout');
+                const logoutResponse = await axios.post('https://spots.pythonanywhere.com/api/logout');
                 console.log("Logout response:", logoutResponse);
                 if (logoutResponse.status === 200) {
                     console.log("Logout successful");

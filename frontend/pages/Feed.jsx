@@ -42,16 +42,18 @@ function Feed () {
 
         const fetchUserInfo = async () => {
             try {
-                await fetch(`http://127.0.0.1:2700/api/user/${state.username}`)
-                    .then(response => {
-                        if (response.state === 200) {
-                            return response.json();
-                        }
-                        throw new Error('Did not find user');
-                    })
-                    .then(data => {
-                        dp({type: types.SET_DATA, pl: data});
-                    })
+                await fetch(
+                    `https://spots.pythonanywhere.com//api/user/${state.username}`
+                )
+                    .then((response) => {
+										if (response.state === 200) {
+											return response.json();
+										}
+										throw new Error('Did not find user');
+									})
+									.then((data) => {
+										dp({ type: types.SET_DATA, pl: data });
+									});
             } catch (e) {
                 console.error('Error in getting user info', e)
             }
