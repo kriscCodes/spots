@@ -1,6 +1,7 @@
 import os, json, pprint, asyncio
 from flask import Flask, render_template, redirect, url_for, request, flash, send_from_directory, jsonify, Response
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm.attributes import flag_modified
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
@@ -21,6 +22,7 @@ db = SQLAlchemy(app, session_options={"autoflush": True})
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 bcrypt = Bcrypt()
+
 
 class User(UserMixin, db.Model):
 
@@ -82,35 +84,30 @@ def get_user_api():
 
 
 @app.route('/api/update-locations', methods=['POST'])
-def update_user_locations():
+def update_place():
     data = request.json
     username = data['user']
-    place_name = data['name']
+    place_id = data['name']
     new_status = data['status']
-    new_message = data.get('message', None)
-    print(username, place_name, new_status, new_message)
+    new_message = data.get('message')
 
     user = User.query.filter_by(username=username).first()
-    place = Places.query.filter_by(name=place_name).first()
-    if place and user:
-        if not user.places:
-            user.places = {}
 
-        existing_entry = user.places.get(place.id, {})
-        print('existing_entry', existing_entry)
+    if user and place_id:
 
-        updated_entry = {
-            'status': new_status,
-            'message': new_message if new_message is not None else existing_entry.get('message', '')
-        }
+        place_entry = user.places.get(place_id, {})
 
-        print('updated_entry', updated_entry)
+        place_entry['status'] = new_status
+        place_entry['message'] = new_message if new_message is not None else place_entry.get('message', '')
 
-        user.places[place.id] = updated_entry
-        db.session.flush()
+        old_places = user.places
+        print('old_places', old_places, 'type', type(old_places))
+        old_places[place_id] = place_entry
+        user.places = old_places
+        flag_modified(user, "places")
+
         db.session.commit()
-        print(user.places)
-        return jsonify({'places': user.places}), 200
+        return jsonify({'message': 'Place updated successfully'}), 200
 
     return jsonify({'message': 'User or Place not found'}), 404
 
@@ -221,9 +218,9 @@ def create_location_dict(place, id):
 
     photo_url = ""
     inside = 'photos' in place
-    print('inside', inside)
+    # print('inside', inside)
     if 'photos' in place and place['photos'][0]:
-        print('ref', place['photos'][0])
+        # print('ref', place['photos'][0])
         photo_url = get_photo_url(place['photos'][0])
 
     return {
@@ -236,14 +233,14 @@ def create_location_dict(place, id):
     }
 
 def get_photo_url(photo):
-    print('photoo',photo)
+    # print('photoo',photo)
     if photo and 'photo_reference' in photo:
         ref = 'photo_reference' in photo
-        print('ref?', ref)
+        # print('ref?', ref)
         height = photo.get('height')
         width = photo.get('width')
         photo_id = photo.get('photo_reference')
-        print('stuff', height, width, photo_id)
+        # print('stuff', height, width, photo_id)
         return get_photo(photo_id, height, width)
 
     return ""
