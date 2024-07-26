@@ -15,7 +15,7 @@ from config import Config
 app = Flask(__name__, static_folder="../frontend/dist", static_url_path="/")
 CORS(app)
 app.config['SECRET_KEY'] = 'your_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///users.db')
 # might have to change these settings
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app, session_options={"autoflush": True})
@@ -471,4 +471,5 @@ def logout():
 
 if __name__ == '__main__':
     create_tables()
-    app.run(debug=True, port=2700)
+    port = int(os.environ.get('PORT', 2700))
+    app.run(host='0.0.0.0', port=port)
