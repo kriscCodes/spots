@@ -22,7 +22,7 @@ function Login() {
 		}
 		console.log('here')
 		try {
-			const response = await fetch('https://spots.pythonanywhere.com/api/login', {
+			const response = await fetch('http://127.0.0.1:2700/api/login', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',

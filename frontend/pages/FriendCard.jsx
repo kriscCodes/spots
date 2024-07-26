@@ -10,7 +10,7 @@ function FriendCard (props) {
 
         const fetchFriendData = async () => {
             try {
-                await fetch(`https://spots.pythonanywhere.com/api/user/${state.username}`)
+                await fetch(`http://127.0.0.1:2700/api/user/${state.username}`)
                     .then(response => {
                         if (response.state === 200) {
                             return response.json();

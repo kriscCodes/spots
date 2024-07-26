@@ -13,7 +13,7 @@ const UserProfile = () => {
             const endpoint = username
             console.log(username)
             try {
-                const response = await axios.get(`https://spots.pythonanywhere.com/api/user/${endpoint}`)
+                const response = await axios.get(`http://127.0.0.1:2700/api/user/${endpoint}`)
                 setUser({...response.data})
                 console.log(user)
 

@@ -39,7 +39,7 @@ function EventsLayout (props) {
     useEffect(() => {
         const fetchEventsLocations = async (query) => {
             try {
-                await fetch ('https://spots.pythonanywhere.com/api/locations-events', {
+                await fetch ('http://127.0.0.1:2700/api/locations-events', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({location: query})

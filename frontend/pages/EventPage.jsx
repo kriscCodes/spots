@@ -91,23 +91,20 @@ function EventPage () {
     useEffect(() => {
         const fetchPlaceInfo = async () => {
             try {
-                await fetch(
-                    'https://spots.pythonanywhere.com/api/place-rating-reviews',
-                    {
-                        method: 'POST',
-										headers: { 'Content-Type': 'application/json' },
-										body: JSON.stringify({ name: from.state.name }),
-									}
-								)
-									.then((response) => {
-										if (response.status === 200) {
-											return response.json();
-										}
-										throw new Error('could not fetch query');
-									})
-									.then((data) => {
-										dp({ type: actionTypes.SET_RATING_REVIEWS, pl: data });
-									});
+                await fetch('http://127.0.0.1:2700/api/place-rating-reviews', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name: from.state.name})
+                })
+                    .then(response => {
+                        if (response.status === 200) {
+                            return response.json();
+                        }
+                        throw new Error('could not fetch query');
+                    })
+                    .then(data => {
+                        dp({type: actionTypes.SET_RATING_REVIEWS, pl: data});
+                    })
             } catch (e) {
                 console.log('error in fetching place info', e);
             }
@@ -119,17 +116,11 @@ function EventPage () {
 
     const updateRating = async (newValue) => {
         try {
-            const response = await fetch(
-                'https://spots.pythonanywhere.com/api/set-rating',
-                {
-                    method: 'POST',
-								headers: { 'Content-Type': 'application/json' },
-								body: JSON.stringify({
-									name: from.state.name,
-									rating: newValue,
-								}),
-							}
-						);
+            const response = await fetch('http://127.0.0.1:2700/api/set-rating', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name: from.state.name, rating: newValue})
+            })
             if (response.ok) {
                 console.log('Rating updated successfully');
             } else {
@@ -148,14 +139,14 @@ function EventPage () {
 
     const updateUserPlaces = async () => {
         try {
-            const response = await fetch('https://spots.pythonanywhere.com/api/update-locations', {
+            const response = await fetch('http://127.0.0.1:2700/api/update-locations', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({user: state.user, name: state.name, status: !state.saved ? 'saved' : 'unsaved'})
             })
             if (response.ok) {
                 const data = await response.json()
-                console.log(data);
+                // console.log(data);
                 console.log('Saved updated successfully');
             } else {
                 console.error('Failed to update Saved');
